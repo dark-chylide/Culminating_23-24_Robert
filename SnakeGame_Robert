@@ -1,0 +1,331 @@
+//SNAKE
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+
+/**
+ *
+ * @author robert
+ */
+package main;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+
+
+import static main.Rectangle.rec_height;
+import static main.Rectangle.rec_width;
+
+import static main.Rectangle.rec_width;
+
+public class Snake extends JPanel{
+
+      private static final Color c = new Color(115,162,78);
+    private static final int start = 250;
+    private static final int speed = 25;
+
+    private ArrayList<Rectangle> body;
+
+    private String direction;
+
+    private Apple apple;
+
+    private final Main window;
+
+
+    public Snake(main.Main window) {
+        this.window = window;
+
+        this.body = new ArrayList<>();
+        body.add(new Rectangle(start, start));
+        Rectangle last = this.body.get(0);
+        body.add(new Rectangle(last.getPosx() - rec_width, last.getPosy()));
+        Rectangle last_2 = this.body.get(1);
+        body.add(new Rectangle(last_2.getPosx() - rec_width, last_2.getPosy()));
+
+        this.direction = "right";
+    }
+
+    public void setDirection(String direction) {
+        this.direction = direction;
+    }
+    public String getDirection() {
+        return this.direction;
+    }
+
+    public void addPart() {
+        Rectangle last = this.body.get(this.body.size() -1);
+        switch (this.direction) {
+            case "right" -> this.body.add(new Rectangle(last.getPosx() - rec_width, last.getPosy()));
+            case "left" -> this.body.add(new Rectangle(last.getPosx() + rec_width, last.getPosy()));
+            case "up" -> this.body.add(new Rectangle(last.getPosx() , last.getPosy() + rec_width));
+            case "down" -> this.body.add(new Rectangle(last.getPosx(), last.getPosy()  - rec_width));
+        }
+    }
+
+    public void checkColission() {
+        Rectangle r3 = this.body.get(0);
+        for (int i = 1; i < this.body.size(); i++) {
+            Rectangle r2 = this.body.get(i);
+
+            if (r3.intersects(r2)) {
+                System.out.println("You lose!");
+                this.window.setVisible(false);
+
+                JFrame parent = new JFrame("Game over!");
+                JOptionPane.showMessageDialog(parent, "Your score: " + this.body.size());
+
+                this.window.dispatchEvent(new WindowEvent(this.window, WindowEvent.WINDOW_CLOSING));
+                System.exit(0);
+            }
+        }
+
+        if (this.apple != null) {
+            if (r3.intersects(new Rectangle(this.apple.getPosx(),this.apple.getPosy()))) {
+                this.apple = null;
+                this.addPart();
+            }
+        }
+
+    }
+
+    public void moveSnake() {
+
+        ArrayList<Rectangle> newLst = new ArrayList<>();
+
+        Rectangle first = this.body.get(0);
+        Rectangle head = new Rectangle(first.getPosx(), first.getPosy());
+
+        switch (this.direction) {
+            case "right" -> head.setPosx(speed);
+            case "left" -> head.setPosx(-speed);
+            case "up" -> head.setPosy(-speed);
+            case "down" -> head.setPosy(speed);
+        }
+        newLst.add(head);
+
+        for (int i = 1; i < this.body.size(); i++) {
+            Rectangle previous = this.body.get(i-1);
+            Rectangle newRec = new Rectangle(previous.getPosx(), previous.getPosy());
+            newLst.add(newRec);
+        }
+
+
+        this.body = newLst;
+        checkColission();
+    }
+
+    private void drawSnake(Graphics g) {
+        moveSnake();
+
+        // draw moved snake
+        Graphics2D g2d = (Graphics2D) g;
+
+
+        if (this.apple != null) {
+            g2d.setPaint(Color.red);
+            g2d.drawRect(this.apple.getPosx(), this.apple.getPosy(), rec_width, rec_height);
+            g2d.fillRect(this.apple.getPosx(),this.apple.getPosy(),rec_width,rec_height);
+        }
+
+        g2d.setPaint(Color.blue);
+        for (Rectangle rec: this.body) {
+            g2d.drawRect(rec.getPosx(),rec.getPosy(),rec_width,rec_height);
+            g2d.fillRect(rec.getPosx(),rec.getPosy(),rec_width,rec_height);
+        }
+    }
+
+    public void setApple(Apple apple) {
+        this.apple = apple;
+    }
+
+    public Apple getApple() {
+        return this.apple;
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        setBackground(c);
+        drawSnake(g);
+    }
+}
+
+//Rectangle
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+
+
+/**
+ *
+ * @author robert
+ */
+public class Rectangle_1 {
+    private int posx;
+    private int posy;
+
+    public static final int rec_width = 25;
+    public static final int rec_height = 25;
+
+    public Rectangle_1(int posx, int posy) {
+        this.posx = posx;
+        this.posy = posy;
+    }
+
+    public boolean intersects(Rectangle_1 r2) {
+        /*
+        return true if x and y coordinates of
+        this and r2 are the same
+        */
+        return this.posx == r2.getPosx() && this.posy == r2.getPosy();
+    }
+
+
+    public int getPosx() {
+        return this.posx;
+    }
+
+    public int getPosy() {
+        return this.posy;
+    }
+
+    public void setPosx(int increment) { this.posx = this.posx + increment; }
+
+    public void setPosy(int increment) { this.posy =  this.posy + increment; }
+
+}
+
+//Apple
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package main;
+
+/**
+ *
+ * @author robert
+ */
+import java.util.Random;
+import java.util.TimerTask;
+
+public class Apple extends TimerTask
+{
+    private int posx;
+    private int posy;
+    private Snake snake;
+
+
+    public int getPosx() {
+        return posx;
+    }
+
+    public int getPosy() {
+        return posy;
+    }
+
+    public Apple(Snake snake) {
+        this.snake = snake;
+    }
+
+    public Apple() {
+        this.posx = 25 * new Random().nextInt(20);
+        this.posy = 25 * new Random().nextInt(20);
+    }
+
+    @Override
+    public void run() {
+        if (this.snake.getApple() == null) {
+            this.snake.setApple(new Apple());
+        }
+    }
+}
+
+//Main
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package main;
+
+/**
+ *
+ * @author robert
+ */
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import javax.swing.*;
+
+public abstract class Main extends JFrame implements KeyListener, ActionListener 
+{
+    Snake snake;
+    
+    public Main()
+    {
+        // create the snake
+        this.snake = new Snake(this);
+
+        // timer for redrawing the screen
+        Timer timer = new Timer(150, this);
+        timer.start();
+
+        // timer for drawing apples on the screen
+        java.util.Timer drawApples = new java.util.Timer();
+        Apple st = new Apple(this.snake);
+        drawApples.schedule(st,0,3000);
+
+        // window creation & drawing
+        add(this.snake);
+        setTitle("Snake Game");
+        setSize(525, 525);
+        this.addKeyListener(this);
+        setLocationRelativeTo(null);
+        setVisible(true);
+        setResizable(false);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) { }
+
+    @Override
+    public void keyReleased(KeyEvent e) { }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+        int c = e.getKeyCode();
+
+        if (c == 39 && !this.snake.getDirection().equals("left")) {
+            this.snake.setDirection("right"); // right arrow pressed
+        }
+
+        else if (c == 37 && !this.snake.getDirection().equals("right")) {
+            this.snake.setDirection("left"); // left arrow pressed
+        }
+
+        else if (c == 38 && !this.snake.getDirection().equals("down")) {
+            this.snake.setDirection("up"); // up arrow pressed
+        }
+
+        else if (c == 40 && !this.snake.getDirection().equals("up")) {
+            this.snake.setDirection("down"); // down arrow pressed
+        }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        // redraw the screen
+        repaint();
+    }
+
+    
+  }
